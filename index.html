@@ -1,454 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Glass Calculator</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>a question for you :)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#eaf6fd;
+    --sky-mid:#cdeafb;
+    --sky-deep:#8fd1ec;
+    --ink:#2b4c5c;
+    --ink-soft:#5b7d8c;
+    --glass:rgba(255,255,255,0.42);
+    --glass-edge:rgba(255,255,255,0.75);
+    --blush:#ffd3e0;
+    --blush-deep:#ff9bb8;
+  }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1a1a4e 0%, #3b1a6b 30%, #6b1a4a 60%, #1a3a6b 100%);
-      overflow: hidden;
-      position: relative;
-    }
+  *{box-sizing:border-box;}
 
-    /* Ambient glow orbs */
-    .orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.45;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .orb1 { width: 400px; height: 400px; background: #7c3aed; top: -100px; left: -100px; }
-    .orb2 { width: 320px; height: 320px; background: #db2777; bottom: -80px; right: -80px; }
-    .orb3 { width: 260px; height: 260px; background: #2563eb; top: 40%; left: 55%; }
-    .orb4 { width: 200px; height: 200px; background: #0891b2; top: 10%; right: 20%; }
+  html,body{
+    margin:0;
+    height:100%;
+    overflow:hidden;
+  }
 
-    /* Calculator glass card */
-    .calc-glass {
-      background: rgba(255, 255, 255, 0.10);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 28px;
-      padding: 28px;
-      width: 340px;
-      box-shadow:
-        0 8px 40px rgba(0, 0, 0, 0.40),
-        inset 0 1px 0 rgba(255, 255, 255, 0.28);
-      position: relative;
-      z-index: 1;
-    }
+  body{
+    font-family:'Nunito', sans-serif;
+    background:linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-deep) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    height:100vh;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
 
-    /* Title */
-    .calc-title {
-      text-align: center;
-      font-size: 12px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.35);
-      margin-bottom: 20px;
-    }
+  /* ---------- drifting clouds / bubbles ---------- */
+  .sky{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
 
-    /* Display */
-    .display-wrap {
-      background: rgba(0, 0, 0, 0.32);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 18px;
-      padding: 18px 22px 16px;
-      margin-bottom: 22px;
-      min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      justify-content: flex-end;
-    }
+  .bubble{
+    position:absolute;
+    bottom:-120px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.15) 70%);
+    opacity:0.7;
+    animation:float linear infinite;
+  }
 
-    .display-expr {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.40);
-      min-height: 18px;
-      word-break: break-all;
-      text-align: right;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.5px;
-    }
+  @keyframes float{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    8%{ opacity:0.65; }
+    100%{ transform:translateY(-115vh) translateX(var(--drift, 20px)); opacity:0; }
+  }
 
-    .display-main {
-      font-size: 42px;
-      font-weight: 300;
-      color: #ffffff;
-      letter-spacing: -1.5px;
-      word-break: break-all;
-      text-align: right;
-      line-height: 1.15;
-      margin-top: 6px;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  .cloud{
+    position:absolute;
+    background:#fff;
+    border-radius:100px;
+    opacity:0.8;
+    filter:blur(0.5px);
+  }
+  .cloud::before, .cloud::after{
+    content:"";
+    position:absolute;
+    background:#fff;
+    border-radius:100px;
+  }
 
-    /* Button grid */
-    .btn-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 11px;
-    }
+  /* ---------- card ---------- */
+  .card{
+    position:relative;
+    z-index:5;
+    width:min(420px, 88vw);
+    padding:48px 36px 40px;
+    border-radius:32px;
+    background:var(--glass);
+    border:1px solid var(--glass-edge);
+    backdrop-filter:blur(18px) saturate(140%);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);
+    box-shadow:
+      0 8px 32px rgba(80,140,170,0.25),
+      inset 0 1px 1px rgba(255,255,255,0.6);
+    text-align:center;
+    transition:transform 0.4s ease;
+  }
 
-    .btn {
-      border: none;
-      border-radius: 15px;
-      font-size: 18px;
-      font-weight: 400;
-      cursor: pointer;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.08s ease, background 0.12s ease, opacity 0.08s;
-      user-select: none;
-      outline: none;
-    }
+  .eyebrow{
+    font-size:13px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+    font-weight:700;
+  }
 
-    .btn:active { transform: scale(0.91); opacity: 0.80; }
-    .btn:focus-visible {
-      box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.8);
-    }
+  h1{
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 6vw, 34px);
+    line-height:1.25;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
 
-    /* Number buttons */
-    .btn-num {
-      background: rgba(255, 255, 255, 0.11);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #ffffff;
-    }
-    .btn-num:hover { background: rgba(255, 255, 255, 0.20); }
+  .sub{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0 0 30px;
+    line-height:1.5;
+  }
 
-    /* Operator buttons */
-    .btn-op {
-      background: rgba(124, 58, 237, 0.40);
-      border: 1px solid rgba(167, 139, 250, 0.38);
-      color: #ddd6fe;
-      font-size: 21px;
-    }
-    .btn-op:hover { background: rgba(124, 58, 237, 0.62); }
-    .btn-op.active-op {
-      background: rgba(167, 139, 250, 0.55);
-      border-color: rgba(233, 213, 255, 0.65);
-      color: #ffffff;
-    }
+  .balloon-row{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    font-size:26px;
+    margin-bottom:22px;
+    user-select:none;
+  }
+  .balloon-row span{
+    display:inline-block;
+    animation:bob 2.6s ease-in-out infinite;
+  }
+  .balloon-row span:nth-child(2){ animation-delay:0.3s; }
+  .balloon-row span:nth-child(3){ animation-delay:0.6s; }
+  .balloon-row span:nth-child(4){ animation-delay:0.9s; }
 
-    /* Equals button */
-    .btn-eq {
-      background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      color: #ffffff;
-      font-size: 24px;
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45);
-    }
-    .btn-eq:hover { opacity: 0.90; box-shadow: 0 6px 24px rgba(124, 58, 237, 0.60); }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0) rotate(-3deg); }
+    50%{ transform:translateY(-8px) rotate(3deg); }
+  }
 
-    /* Function buttons (AC, +/-, %) */
-    .btn-fn {
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: rgba(255, 255, 255, 0.75);
-      font-size: 15px;
-    }
-    .btn-fn:hover { background: rgba(255, 255, 255, 0.15); }
+  .actions{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    min-height:64px;
+  }
 
-    /* Clear button */
-    .btn-danger {
-      background: rgba(220, 38, 38, 0.28);
-      border: 1px solid rgba(252, 165, 165, 0.28);
-      color: #fca5a5;
-      font-size: 15px;
-    }
-    .btn-danger:hover { background: rgba(220, 38, 38, 0.50); }
+  button{
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    border:none;
+    cursor:pointer;
+    border-radius:999px;
+    padding:14px 30px;
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+  }
 
-    /* Zero spans 2 columns */
-    .btn-zero { grid-column: span 2; }
+  .yes-btn{
+    background:linear-gradient(135deg, #7fd6ef, #5fb7e0);
+    color:#fff;
+    box-shadow:0 10px 22px rgba(95,183,224,0.45);
+    position:relative;
+    z-index:2;
+  }
+  .yes-btn:hover{ transform:translateY(-2px) scale(1.04); }
+  .yes-btn:active{ transform:scale(0.97); }
 
-    /* History panel */
-    .history-toggle {
-      text-align: center;
-      margin-top: 18px;
-    }
-    .history-toggle button {
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.35);
-      font-size: 12px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      padding: 4px 12px;
-      border-radius: 8px;
-      transition: color 0.15s;
-    }
-    .history-toggle button:hover { color: rgba(255,255,255,0.65); }
+  .no-btn{
+    background:rgba(255,255,255,0.55);
+    color:var(--ink-soft);
+    border:1px solid rgba(255,255,255,0.8);
+    position:absolute;
+    left:50%;
+    transform:translateX(56px);
+    z-index:1;
+  }
 
-    .history-panel {
-      display: none;
-      margin-top: 14px;
-      background: rgba(0,0,0,0.22);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 14px;
-      padding: 12px 16px;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-    .history-panel.open { display: block; }
-    .history-panel::-webkit-scrollbar { width: 4px; }
-    .history-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  .no-hint{
+    margin-top:18px;
+    font-size:13px;
+    color:var(--ink-soft);
+    opacity:0.85;
+    min-height:18px;
+    transition:opacity 0.2s ease;
+  }
 
-    .history-item {
-      font-size: 13px;
-      color: rgba(255,255,255,0.55);
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      text-align: right;
-      font-family: 'Courier New', monospace;
-      cursor: pointer;
-      transition: color 0.12s;
-    }
-    .history-item:last-child { border-bottom: none; }
-    .history-item:hover { color: rgba(255,255,255,0.90); }
-    .history-item span.result { color: #a78bfa; font-weight: 500; }
-    .history-empty {
-      font-size: 12px;
-      color: rgba(255,255,255,0.28);
-      text-align: center;
-      padding: 8px 0;
-    }
-  </style>
+  /* ---------- celebration view ---------- */
+  .celebrate{
+    display:none;
+  }
+  .celebrate.show{
+    display:block;
+    animation:pop 0.5s ease;
+  }
+  @keyframes pop{
+    0%{ transform:scale(0.85); opacity:0; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+
+  .heart-burst{
+    font-size:48px;
+    margin-bottom:6px;
+  }
+
+  .hide{ display:none !important; }
+
+  .confetti-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:50;
+    overflow:hidden;
+  }
+  .confetti{
+    position:absolute;
+    top:-20px;
+    border-radius:3px;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(540deg); opacity:0.9; }
+  }
+
+  @media (max-width:380px){
+    .no-btn{ position:static; transform:none; margin-top:14px; }
+    .actions{ flex-direction:column; }
+  }
+</style>
 </head>
 <body>
 
-  <!-- Ambient orbs -->
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-  <div class="orb orb4"></div>
+<div class="sky" id="sky"></div>
 
-  <div class="calc-glass" role="main" aria-label="Glass Calculator">
+<div class="card" id="card">
 
-    <p class="calc-title">Calculator</p>
+  <div id="ask">
+    <p class="eyebrow">a small question</p>
+    <div class="balloon-row">
+      <span>🎈</span><span>💙</span><span>☁️</span><span>🎈</span>
+    </div>
+    <h1>Will you be my girlfriend?</h1>
+    <p class="sub">Take your time. (Not really — the clouds are waiting.)</p>
 
-    <!-- Display -->
-    <div class="display-wrap">
-      <div class="display-expr" id="expr" aria-live="polite"></div>
-      <div class="display-main" id="display" aria-live="polite">0</div>
+    <div class="actions">
+      <button class="yes-btn" id="yesBtn" onclick="sayYes()">Yes, obviously 💙</button>
+      <button class="no-btn" id="noBtn">No</button>
     </div>
 
-    <!-- Buttons -->
-    <div class="btn-grid">
-      <!-- Row 1 -->
-      <button class="btn btn-danger" onclick="ac()" aria-label="All clear">AC</button>
-      <button class="btn btn-fn"     onclick="toggleSign()" aria-label="Toggle sign">+/−</button>
-      <button class="btn btn-fn"     onclick="percent()" aria-label="Percent">%</button>
-      <button class="btn btn-op"     id="op-div" onclick="op('/')" aria-label="Divide">÷</button>
-
-      <!-- Row 2 -->
-      <button class="btn btn-num" onclick="num('7')">7</button>
-      <button class="btn btn-num" onclick="num('8')">8</button>
-      <button class="btn btn-num" onclick="num('9')">9</button>
-      <button class="btn btn-op"  id="op-mul" onclick="op('×')" aria-label="Multiply">×</button>
-
-      <!-- Row 3 -->
-      <button class="btn btn-num" onclick="num('4')">4</button>
-      <button class="btn btn-num" onclick="num('5')">5</button>
-      <button class="btn btn-num" onclick="num('6')">6</button>
-      <button class="btn btn-op"  id="op-sub" onclick="op('-')" aria-label="Subtract">−</button>
-
-      <!-- Row 4 -->
-      <button class="btn btn-num" onclick="num('1')">1</button>
-      <button class="btn btn-num" onclick="num('2')">2</button>
-      <button class="btn btn-num" onclick="num('3')">3</button>
-      <button class="btn btn-op"  id="op-add" onclick="op('+')" aria-label="Add">+</button>
-
-      <!-- Row 5 -->
-      <button class="btn btn-num btn-zero" onclick="num('0')">0</button>
-      <button class="btn btn-num" onclick="dot()" aria-label="Decimal point">.</button>
-      <button class="btn btn-eq"  onclick="eq()" aria-label="Equals">=</button>
-    </div>
-
-    <!-- History -->
-    <div class="history-toggle">
-      <button onclick="toggleHistory()" id="hist-btn">▾ History</button>
-    </div>
-    <div class="history-panel" id="history-panel">
-      <div class="history-empty" id="history-empty">No history yet</div>
-    </div>
-
+    <p class="no-hint" id="hint">&nbsp;</p>
   </div>
 
-  <script>
-    let cur = '0', prev = '', pendingOp = '', freshInput = false, justEvaled = false;
-    let history = [];
+  <div class="celebrate" id="celebrate">
+    <div class="heart-burst">💙🎉💙</div>
+    <h1>Yay! She said yes!</h1>
+    <p class="sub">Okay, technically <em>you</em> said yes. But the clouds are throwing a party either way.</p>
+  </div>
 
-    const display = document.getElementById('display');
-    const exprEl  = document.getElementById('expr');
+</div>
 
-    function clearOpHighlight() {
-      ['op-div','op-mul','op-sub','op-add'].forEach(id => {
-        document.getElementById(id).classList.remove('active-op');
-      });
+<script>
+  /* ---- background bubbles ---- */
+  const sky = document.getElementById('sky');
+  const bubbleCount = 16;
+  for(let i=0;i<bubbleCount;i++){
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 14 + Math.random()*46;
+    b.style.width = size+'px';
+    b.style.height = size+'px';
+    b.style.left = Math.random()*100+'vw';
+    b.style.setProperty('--drift', (Math.random()*80-40)+'px');
+    b.style.animationDuration = (10 + Math.random()*14)+'s';
+    b.style.animationDelay = (Math.random()*12)+'s';
+    sky.appendChild(b);
+  }
+
+  /* a couple of soft clouds */
+  const cloudSpecs = [
+    {top:'12%', left:'8%', w:120, h:34},
+    {top:'22%', left:'70%', w:160, h:42},
+    {top:'68%', left:'78%', w:110, h:30},
+    {top:'78%', left:'4%', w:140, h:36},
+  ];
+  cloudSpecs.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'cloud';
+    el.style.top = c.top;
+    el.style.left = c.left;
+    el.style.width = c.w+'px';
+    el.style.height = c.h+'px';
+    sky.appendChild(el);
+  });
+
+  /* ---- the "No" button that won't be caught ---- */
+  const noBtn = document.getElementById('noBtn');
+  const yesBtn = document.getElementById('yesBtn');
+  const card = document.getElementById('card');
+  const hint = document.getElementById('hint');
+
+  const hints = [
+    "almost had it",
+    "so close!",
+    "it's quick, I promise",
+    "okay that one was rude",
+    "the button is shy",
+    "just say yes 🥺",
+    "I believe in you",
+    "one more try"
+  ];
+
+  let dodges = 0;
+
+  function dodge(){
+    const cardRect = card.getBoundingClientRect();
+    const btnRect = noBtn.getBoundingClientRect();
+    const maxX = cardRect.width - btnRect.width - 24;
+    const maxY = cardRect.height - btnRect.height - 24;
+    const x = Math.max(8, Math.random()*maxX);
+    const y = Math.max(8, Math.random()*maxY);
+
+    noBtn.style.position = 'absolute';
+    noBtn.style.left = x+'px';
+    noBtn.style.top = y+'px';
+    noBtn.style.transform = 'none';
+
+    dodges++;
+    hint.textContent = hints[Math.min(dodges-1, hints.length-1)];
+
+    // yes button grows a little more confident each time
+    const scale = Math.min(1 + dodges*0.06, 1.5);
+    yesBtn.style.transform = `scale(${scale})`;
+  }
+
+  noBtn.addEventListener('mouseenter', dodge);
+  noBtn.addEventListener('click', (e)=>{ e.preventDefault(); dodge(); });
+  noBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); dodge(); }, {passive:false});
+
+  /* ---- celebration ---- */
+  function sayYes(){
+    document.getElementById('ask').classList.add('hide');
+    document.getElementById('celebrate').classList.add('show');
+    launchConfetti();
+  }
+
+  function launchConfetti(){
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    document.body.appendChild(layer);
+
+    const colors = ['#8fd1ec','#5fb7e0','#ffd3e0','#ff9bb8','#ffffff','#cdeafb'];
+    const pieces = 80;
+
+    for(let i=0;i<pieces;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      const size = 6 + Math.random()*6;
+      c.style.width = size+'px';
+      c.style.height = (size*0.4)+'px';
+      c.style.left = Math.random()*100+'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDuration = (2.2 + Math.random()*1.8)+'s';
+      c.style.animationDelay = (Math.random()*0.6)+'s';
+      layer.appendChild(c);
     }
 
-    function num(n) {
-      if (cur === 'Error') { ac(); }
-      if (freshInput || justEvaled) { cur = n; freshInput = false; justEvaled = false; }
-      else { cur = cur === '0' ? n : cur + n; }
-      if (cur.replace('-','').length > 12) return;
-      display.textContent = cur;
-    }
-
-    function dot() {
-      if (justEvaled) { cur = '0'; justEvaled = false; }
-      if (freshInput)  { cur = '0'; freshInput = false; }
-      if (!cur.includes('.')) { cur += '.'; }
-      display.textContent = cur;
-    }
-
-    function op(o) {
-      clearOpHighlight();
-      const opMap = { '/':'op-div', '×':'op-mul', '-':'op-sub', '+':'op-add' };
-      if (opMap[o]) document.getElementById(opMap[o]).classList.add('active-op');
-
-      if (pendingOp && !freshInput && !justEvaled) { eq(true); }
-      prev = cur;
-      pendingOp = o;
-      freshInput = true;
-      justEvaled = false;
-
-      const sym = { '/':'÷', '×':'×', '-':'−', '+':'+' };
-      exprEl.textContent = prev + ' ' + (sym[o] || o);
-    }
-
-    function compute(a, b, o) {
-      a = parseFloat(a); b = parseFloat(b);
-      if (o === '+') return a + b;
-      if (o === '-') return a - b;
-      if (o === '×') return a * b;
-      if (o === '/') { if (b === 0) return 'Error'; return a / b; }
-    }
-
-    function eq(silent) {
-      if (!pendingOp) return;
-      const sym = { '/':'÷', '×':'×', '-':'−', '+':'+' };
-      const exprStr = prev + ' ' + (sym[pendingOp] || pendingOp) + ' ' + cur;
-
-      if (!silent) exprEl.textContent = exprStr + ' =';
-
-      let result = compute(prev, cur, pendingOp);
-
-      if (result === 'Error') {
-        cur = 'Error';
-        display.textContent = 'Error';
-        pendingOp = '';
-        return;
-      }
-
-      result = parseFloat(result.toFixed(10));
-      if (result.toString().length > 12) result = parseFloat(result.toPrecision(9));
-
-      if (!silent) {
-        addHistory(exprStr + ' = ' + result);
-      }
-
-      cur = result.toString();
-      display.textContent = cur;
-      pendingOp = '';
-      freshInput = false;
-      justEvaled = true;
-      if (!silent) clearOpHighlight();
-    }
-
-    function ac() {
-      cur = '0'; prev = ''; pendingOp = ''; freshInput = false; justEvaled = false;
-      display.textContent = '0'; exprEl.textContent = '';
-      clearOpHighlight();
-    }
-
-    function toggleSign() {
-      if (cur === '0' || cur === 'Error') return;
-      cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur;
-      display.textContent = cur;
-    }
-
-    function percent() {
-      if (cur === 'Error') return;
-      cur = (parseFloat(cur) / 100).toString();
-      display.textContent = cur;
-    }
-
-    // History
-    function addHistory(entry) {
-      history.unshift(entry);
-      if (history.length > 20) history.pop();
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const panel = document.getElementById('history-panel');
-      const empty = document.getElementById('history-empty');
-      if (history.length === 0) {
-        empty.style.display = 'block';
-        return;
-      }
-      empty.style.display = 'none';
-      const items = panel.querySelectorAll('.history-item');
-      items.forEach(el => el.remove());
-
-      history.forEach(entry => {
-        const parts = entry.split(' = ');
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = parts[0] + ' = <span class="result">' + parts[1] + '</span>';
-        div.title = 'Tap to reuse result';
-        div.onclick = () => {
-          cur = parts[1];
-          display.textContent = cur;
-          justEvaled = true;
-        };
-        panel.appendChild(div);
-      });
-    }
-
-    let histOpen = false;
-    function toggleHistory() {
-      histOpen = !histOpen;
-      const panel = document.getElementById('history-panel');
-      const btn   = document.getElementById('hist-btn');
-      panel.classList.toggle('open', histOpen);
-      btn.textContent = histOpen ? '▴ History' : '▾ History';
-    }
-
-    // Keyboard support
-    document.addEventListener('keydown', e => {
-      if (e.key >= '0' && e.key <= '9') { num(e.key); }
-      else if (e.key === '.') { dot(); }
-      else if (e.key === '+') { op('+'); }
-      else if (e.key === '-') { op('-'); }
-      else if (e.key === '*') { op('×'); }
-      else if (e.key === '/') { e.preventDefault(); op('/'); }
-      else if (e.key === 'Enter' || e.key === '=') { eq(); }
-      else if (e.key === 'Escape') { ac(); }
-      else if (e.key === 'Backspace') {
-        if (cur.length > 1 && cur !== 'Error') { cur = cur.slice(0,-1); display.textContent = cur; }
-        else { cur = '0'; display.textContent = '0'; }
-      }
-    });
-  </script>
+    setTimeout(()=>layer.remove(), 4200);
+  }
+</script>
 
 </body>
 </html>
