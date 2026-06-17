@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glass Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1a4e 0%, #3b1a6b 30%, #6b1a4a 60%, #1a3a6b 100%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ambient glow orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb1 { width: 400px; height: 400px; background: #7c3aed; top: -100px; left: -100px; }
+    .orb2 { width: 320px; height: 320px; background: #db2777; bottom: -80px; right: -80px; }
+    .orb3 { width: 260px; height: 260px; background: #2563eb; top: 40%; left: 55%; }
+    .orb4 { width: 200px; height: 200px; background: #0891b2; top: 10%; right: 20%; }
+
+    /* Calculator glass card */
+    .calc-glass {
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 28px;
+      padding: 28px;
+      width: 340px;
+      box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.40),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Title */
+    .calc-title {
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.35);
+      margin-bottom: 20px;
+    }
+
+    /* Display */
+    .display-wrap {
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 18px 22px 16px;
+      margin-bottom: 22px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+    }
+
+    .display-expr {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.40);
+      min-height: 18px;
+      word-break: break-all;
+      text-align: right;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .display-main {
+      font-size: 42px;
+      font-weight: 300;
+      color: #ffffff;
+      letter-spacing: -1.5px;
+      word-break: break-all;
+      text-align: right;
+      line-height: 1.15;
+      margin-top: 6px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Button grid */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 11px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 15px;
+      font-size: 18px;
+      font-weight: 400;
+      cursor: pointer;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.08s ease, background 0.12s ease, opacity 0.08s;
+      user-select: none;
+      outline: none;
+    }
+
+    .btn:active { transform: scale(0.91); opacity: 0.80; }
+    .btn:focus-visible {
+      box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.8);
+    }
+
+    /* Number buttons */
+    .btn-num {
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+    .btn-num:hover { background: rgba(255, 255, 255, 0.20); }
+
+    /* Operator buttons */
+    .btn-op {
+      background: rgba(124, 58, 237, 0.40);
+      border: 1px solid rgba(167, 139, 250, 0.38);
+      color: #ddd6fe;
+      font-size: 21px;
+    }
+    .btn-op:hover { background: rgba(124, 58, 237, 0.62); }
+    .btn-op.active-op {
+      background: rgba(167, 139, 250, 0.55);
+      border-color: rgba(233, 213, 255, 0.65);
+      color: #ffffff;
+    }
+
+    /* Equals button */
+    .btn-eq {
+      background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      font-size: 24px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45);
+    }
+    .btn-eq:hover { opacity: 0.90; box-shadow: 0 6px 24px rgba(124, 58, 237, 0.60); }
+
+    /* Function buttons (AC, +/-, %) */
+    .btn-fn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+    }
+    .btn-fn:hover { background: rgba(255, 255, 255, 0.15); }
+
+    /* Clear button */
+    .btn-danger {
+      background: rgba(220, 38, 38, 0.28);
+      border: 1px solid rgba(252, 165, 165, 0.28);
+      color: #fca5a5;
+      font-size: 15px;
+    }
+    .btn-danger:hover { background: rgba(220, 38, 38, 0.50); }
+
+    /* Zero spans 2 columns */
+    .btn-zero { grid-column: span 2; }
+
+    /* History panel */
+    .history-toggle {
+      text-align: center;
+      margin-top: 18px;
+    }
+    .history-toggle button {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 8px;
+      transition: color 0.15s;
+    }
+    .history-toggle button:hover { color: rgba(255,255,255,0.65); }
+
+    .history-panel {
+      display: none;
+      margin-top: 14px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 12px 16px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .history-panel.open { display: block; }
+    .history-panel::-webkit-scrollbar { width: 4px; }
+    .history-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    .history-item {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      text-align: right;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { color: rgba(255,255,255,0.90); }
+    .history-item span.result { color: #a78bfa; font-weight: 500; }
+    .history-empty {
+      font-size: 12px;
+      color: rgba(255,255,255,0.28);
+      text-align: center;
+      padding: 8px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient orbs -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="orb orb4"></div>
+
+  <div class="calc-glass" role="main" aria-label="Glass Calculator">
+
+    <p class="calc-title">Calculator</p>
+
+    <!-- Display -->
+    <div class="display-wrap">
+      <div class="display-expr" id="expr" aria-live="polite"></div>
+      <div class="display-main" id="display" aria-live="polite">0</div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-grid">
+      <!-- Row 1 -->
+      <button class="btn btn-danger" onclick="ac()" aria-label="All clear">AC</button>
+      <button class="btn btn-fn"     onclick="toggleSign()" aria-label="Toggle sign">+/−</button>
+      <button class="btn btn-fn"     onclick="percent()" aria-label="Percent">%</button>
+      <button class="btn btn-op"     id="op-div" onclick="op('/')" aria-label="Divide">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn btn-num" onclick="num('7')">7</button>
+      <button class="btn btn-num" onclick="num('8')">8</button>
+      <button class="btn btn-num" onclick="num('9')">9</button>
+      <button class="btn btn-op"  id="op-mul" onclick="op('×')" aria-label="Multiply">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn btn-num" onclick="num('4')">4</button>
+      <button class="btn btn-num" onclick="num('5')">5</button>
+      <button class="btn btn-num" onclick="num('6')">6</button>
+      <button class="btn btn-op"  id="op-sub" onclick="op('-')" aria-label="Subtract">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn btn-num" onclick="num('1')">1</button>
+      <button class="btn btn-num" onclick="num('2')">2</button>
+      <button class="btn btn-num" onclick="num('3')">3</button>
+      <button class="btn btn-op"  id="op-add" onclick="op('+')" aria-label="Add">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn btn-num btn-zero" onclick="num('0')">0</button>
+      <button class="btn btn-num" onclick="dot()" aria-label="Decimal point">.</button>
+      <button class="btn btn-eq"  onclick="eq()" aria-label="Equals">=</button>
+    </div>
+
+    <!-- History -->
+    <div class="history-toggle">
+      <button onclick="toggleHistory()" id="hist-btn">▾ History</button>
+    </div>
+    <div class="history-panel" id="history-panel">
+      <div class="history-empty" id="history-empty">No history yet</div>
+    </div>
+
+  </div>
+
+  <script>
+    let cur = '0', prev = '', pendingOp = '', freshInput = false, justEvaled = false;
+    let history = [];
+
+    const display = document.getElementById('display');
+    const exprEl  = document.getElementById('expr');
+
+    function clearOpHighlight() {
+      ['op-div','op-mul','op-sub','op-add'].forEach(id => {
+        document.getElementById(id).classList.remove('active-op');
+      });
+    }
+
+    function num(n) {
+      if (cur === 'Error') { ac(); }
+      if (freshInput || justEvaled) { cur = n; freshInput = false; justEvaled = false; }
+      else { cur = cur === '0' ? n : cur + n; }
+      if (cur.replace('-','').length > 12) return;
+      display.textContent = cur;
+    }
+
+    function dot() {
+      if (justEvaled) { cur = '0'; justEvaled = false; }
+      if (freshInput)  { cur = '0'; freshInput = false; }
+      if (!cur.includes('.')) { cur += '.'; }
+      display.textContent = cur;
+    }
+
+    function op(o) {
+      clearOpHighlight();
+      const opMap = { '/':'op-div', '×':'op-mul', '-':'op-sub', '+':'op-add' };
+      if (opMap[o]) document.getElementById(opMap[o]).classList.add('active-op');
+
+      if (pendingOp && !freshInput && !justEvaled) { eq(true); }
+      prev = cur;
+      pendingOp = o;
+      freshInput = true;
+      justEvaled = false;
+
+      const sym = { '/':'÷', '×':'×', '-':'−', '+':'+' };
+      exprEl.textContent = prev + ' ' + (sym[o] || o);
+    }
+
+    function compute(a, b, o) {
+      a = parseFloat(a); b = parseFloat(b);
+      if (o === '+') return a + b;
+      if (o === '-') return a - b;
+      if (o === '×') return a * b;
+      if (o === '/') { if (b === 0) return 'Error'; return a / b; }
+    }
+
+    function eq(silent) {
+      if (!pendingOp) return;
+      const sym = { '/':'÷', '×':'×', '-':'−', '+':'+' };
+      const exprStr = prev + ' ' + (sym[pendingOp] || pendingOp) + ' ' + cur;
+
+      if (!silent) exprEl.textContent = exprStr + ' =';
+
+      let result = compute(prev, cur, pendingOp);
+
+      if (result === 'Error') {
+        cur = 'Error';
+        display.textContent = 'Error';
+        pendingOp = '';
+        return;
+      }
+
+      result = parseFloat(result.toFixed(10));
+      if (result.toString().length > 12) result = parseFloat(result.toPrecision(9));
+
+      if (!silent) {
+        addHistory(exprStr + ' = ' + result);
+      }
+
+      cur = result.toString();
+      display.textContent = cur;
+      pendingOp = '';
+      freshInput = false;
+      justEvaled = true;
+      if (!silent) clearOpHighlight();
+    }
+
+    function ac() {
+      cur = '0'; prev = ''; pendingOp = ''; freshInput = false; justEvaled = false;
+      display.textContent = '0'; exprEl.textContent = '';
+      clearOpHighlight();
+    }
+
+    function toggleSign() {
+      if (cur === '0' || cur === 'Error') return;
+      cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur;
+      display.textContent = cur;
+    }
+
+    function percent() {
+      if (cur === 'Error') return;
+      cur = (parseFloat(cur) / 100).toString();
+      display.textContent = cur;
+    }
+
+    // History
+    function addHistory(entry) {
+      history.unshift(entry);
+      if (history.length > 20) history.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const panel = document.getElementById('history-panel');
+      const empty = document.getElementById('history-empty');
+      if (history.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      const items = panel.querySelectorAll('.history-item');
+      items.forEach(el => el.remove());
+
+      history.forEach(entry => {
+        const parts = entry.split(' = ');
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = parts[0] + ' = <span class="result">' + parts[1] + '</span>';
+        div.title = 'Tap to reuse result';
+        div.onclick = () => {
+          cur = parts[1];
+          display.textContent = cur;
+          justEvaled = true;
+        };
+        panel.appendChild(div);
+      });
+    }
+
+    let histOpen = false;
+    function toggleHistory() {
+      histOpen = !histOpen;
+      const panel = document.getElementById('history-panel');
+      const btn   = document.getElementById('hist-btn');
+      panel.classList.toggle('open', histOpen);
+      btn.textContent = histOpen ? '▴ History' : '▾ History';
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', e => {
+      if (e.key >= '0' && e.key <= '9') { num(e.key); }
+      else if (e.key === '.') { dot(); }
+      else if (e.key === '+') { op('+'); }
+      else if (e.key === '-') { op('-'); }
+      else if (e.key === '*') { op('×'); }
+      else if (e.key === '/') { e.preventDefault(); op('/'); }
+      else if (e.key === 'Enter' || e.key === '=') { eq(); }
+      else if (e.key === 'Escape') { ac(); }
+      else if (e.key === 'Backspace') {
+        if (cur.length > 1 && cur !== 'Error') { cur = cur.slice(0,-1); display.textContent = cur; }
+        else { cur = '0'; display.textContent = '0'; }
+      }
+    });
+  </script>
+
+</body>
+</html>
