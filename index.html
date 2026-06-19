@@ -113,14 +113,18 @@
     line-height:1.5;
   }
 
-  .stage{
-    position:relative;
-    width:100%;
-    height:clamp(170px, 28vh, 230px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:14px;
+.stage {
+  position: relative;
+  width: 100%;
+  height: clamp(170px, 28vh, 230px);
+
+  display: flex;
+  flex-direction: column;   /* Stack items vertically */
+  align-items: center;      /* Center horizontally */
+  justify-content: center;  /* Center vertically */
+
+  gap: 14px;
+
   }
 
   .btn{
@@ -150,7 +154,7 @@
   .yes-btn:active{ transform:translateY(0) scale(0.98); }
 
   .no-btn{
-    position:fixed;
+    /*position:fixed;*/
     background:rgba(255,255,255,0.55);
     color:var(--ink-soft);
     border:1px solid rgba(255,255,255,0.8);
@@ -388,11 +392,18 @@
   let lastDodgeTime = 0;
   const PROXIMITY = 80;
 
-  function placeInitial(){
-    const yr = yesBtn.getBoundingClientRect();
-    const cr = card.getBoundingClientRect();
-    noBtn.style.left = (yr.right - cr.left + 12) + 'px';
-    noBtn.style.top  = (yr.top  - cr.top  + (yr.height - noBtn.offsetHeight) / 2) + 'px';
+function placeInitial() {
+  const yr = yesBtn.getBoundingClientRect();
+  const cr = card.getBoundingClientRect();
+
+  noBtn.style.position = 'absolute';
+
+  noBtn.style.left =
+    (yr.left - cr.left + (yr.width - noBtn.offsetWidth) / 2) + 'px';
+
+  noBtn.style.top =
+    (yr.bottom - cr.top + 14) + 'px';
+
   }
   window.addEventListener('load', placeInitial);
   window.addEventListener('resize', placeInitial);
