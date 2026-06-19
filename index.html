@@ -150,11 +150,33 @@
   .yes-btn:active{ transform:translateY(0) scale(0.98); }
 
   .no-btn{
+    position:fixed;
     background:rgba(255,255,255,0.55);
     color:var(--ink-soft);
     border:1px solid rgba(255,255,255,0.8);
-    transition:transform 0.35s cubic-bezier(.34,1.56,.64,1);
-    will-change:transform;
+    transition:left 0.28s cubic-bezier(.34,1.56,.64,1), top 0.28s cubic-bezier(.34,1.56,.64,1), background 0.3s ease;
+    z-index:20;
+  }
+
+  .no-btn.scared{
+    animation:shake 0.25s ease;
+  }
+
+  @keyframes shake{
+    0%,100%{ transform:rotate(0deg) scale(1); }
+    20%{ transform:rotate(-6deg) scale(1.05); }
+    40%{ transform:rotate(7deg) scale(1.08); }
+    60%{ transform:rotate(-5deg) scale(1.06); }
+    80%{ transform:rotate(4deg) scale(1.04); }
+  }
+
+  .hint-msg{
+    min-height:1.4em;
+    margin:10px 0 0;
+    font-size:0.88rem;
+    color:var(--ink-soft);
+    font-style:italic;
+    transition:opacity 0.3s ease;
   }
 
   /* answer view */
@@ -278,20 +300,21 @@
 
     <div class="question-view" id="questionView">
       <p class="eyebrow">A question for you, Maya 💌</p>
-      <h1>Will you be my Valentine?</h1>
-      <p class="subtext">Will you be my valentine For the Rest of my Life??</p>
+      <h1>Will you be my girlfriend?</h1>
+      <p class="subtext">Take your time… (though my heart's pretty sure there's only one right answer 😌)</p>
 
       <div class="stage" id="stage">
         <button class="btn yes-btn" id="yesBtn">Yes, of course! ❤️</button>
         <button class="btn no-btn" id="noBtn">No, I won't</button>
       </div>
+      <p class="hint-msg" id="hint"></p>
     </div>
 
     <div class="answer-view" id="answerView" hidden aria-live="polite">
       <div class="big-heart">❤️</div>
       <h1>I LOVE YOU MAYA ❤️</h1>
       <p class="romantic-msg">You're my favorite hello and the best part of every day. Here's to all our inside jokes, silly grins, and adventures still to come — together. 🥰</p>
-      <p class="signature"> # ANULAX ❤️</p>
+      <p class="signature">forever yours ❤️</p>
 
       <button class="btn more-btn" id="moreBtn">Click for more message 💌</button>
 
@@ -327,68 +350,128 @@
     floatLayer.appendChild(span);
   }
 
-  // ---- dodging "No" button ----
-  const noBtn = document.getElementById('noBtn');
-  const stage = document.getElementById('stage');
-  let currentX = 0, currentY = 0;
-
-  function dodge(clientX, clientY){
-    const btnRect = noBtn.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-
-    const centerX = btnRect.left + btnRect.width/2;
-    const centerY = btnRect.top + btnRect.height/2;
-
-    let dx = centerX - clientX;
-    let dy = centerY - clientY;
-    let dist = Math.hypot(dx,dy);
-    if(dist < 1){
-      const randomAngle = Math.random()*Math.PI*2;
-      dx = Math.cos(randomAngle); dy = Math.sin(randomAngle); dist = 1;
-    } else { dx/=dist; dy/=dist; }
-
-    const angle = (Math.random()-0.5) * (Math.PI/1.1); // randomized direction spread
-    const cosA = Math.cos(angle), sinA = Math.sin(angle);
-    const rdx = dx*cosA - dy*sinA;
-    const rdy = dx*sinA + dy*cosA;
-
-    const moveDist = 55 + Math.random()*95;
-
-    let newX = currentX + rdx*moveDist;
-    let newY = currentY + rdy*moveDist;
-
-    const baseLeft = btnRect.left - currentX;
-    const baseTop = btnRect.top - currentY;
-
-    const margin = 8;
-    const minX = (stageRect.left - baseLeft) + margin;
-    const maxX = (stageRect.right - baseLeft) - btnRect.width - margin;
-    const minY = (stageRect.top - baseTop) + margin;
-    const maxY = (stageRect.bottom - baseTop) - btnRect.height - margin;
-
-    newX = Math.max(minX, Math.min(maxX, newX));
-    newY = Math.max(minY, Math.min(maxY, newY));
-
-    currentX = newX; currentY = newY;
-    const wobble = (Math.random()*16-8).toFixed(1);
-    noBtn.style.transform = `translate(${newX}px, ${newY}px) rotate(${wobble}deg)`;
-  }
-
-  noBtn.addEventListener('mouseenter', (e)=> dodge(e.clientX, e.clientY));
-  noBtn.addEventListener('touchstart', (e)=>{
-    e.preventDefault();
-    const t = e.touches[0];
-    dodge(t.clientX, t.clientY);
-  }, { passive:false });
-  noBtn.addEventListener('focus', ()=>{
-    const r = noBtn.getBoundingClientRect();
-    dodge(r.left + r.width/2 + (Math.random()>0.5?1:-1)*200, r.top + r.height/2);
-  });
-
   // ---- "Yes" reveal ----
   const yesBtn = document.getElementById('yesBtn');
   const questionView = document.getElementById('questionView');
   const answerView = document.getElementById('answerView');
+
+  // ---- dodging "No" button ----
+  const noBtn = document.getElementById('noBtn');
+  const card  = document.getElementById('card');
+  const hint  = document.getElementById('hint');
+
+  // Reparent noBtn to card so position:absolute is relative to card
+  card.appendChild(noBtn);
+
+  const hints = [
+    "almost had it",
+    "so close!",
+    "it's quick, I promise",
+    "okay that one was rude",
+    "the button is shy",
+    "just say yes 🥺",
+    "I believe in you",
+    "one more try"
+  ];
+
+  const noBtnTexts = [
+    "No, I won't",
+    "Nope 😤",
+    "Nice try 😏",
+    "Stop it! 😅",
+    "Can't catch me 🏃",
+    "NEVER!! 🚀",
+    "AHHHHH 😱"
+  ];
+
+  let dodges = 0;
+  let lastDodgeTime = 0;
+  const PROXIMITY = 80;
+
+  function placeInitial(){
+    const yr = yesBtn.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    noBtn.style.left = (yr.right - cr.left + 12) + 'px';
+    noBtn.style.top  = (yr.top  - cr.top  + (yr.height - noBtn.offsetHeight) / 2) + 'px';
+  }
+  window.addEventListener('load', placeInitial);
+  window.addEventListener('resize', placeInitial);
+
+  function dodge(mouseX, mouseY){
+    const now = Date.now();
+    const cooldown = Math.max(70, 270 - dodges * 16);
+    if(now - lastDodgeTime < cooldown) return;
+    lastDodgeTime = now;
+
+    const r  = noBtn.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+
+    let dx = cx - mouseX;
+    let dy = cy - mouseY;
+    let len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+
+    const spread = Math.PI / 2.2 + dodges * 0.05;
+    const angle  = (Math.random() - 0.5) * spread;
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
+    const ndx = dx * cosA - dy * sinA;
+    const ndy = dx * sinA + dy * cosA;
+
+    const step = 75 + Math.random() * 65 + dodges * 3;
+
+    const margin = 10;
+    let newVX = r.left + ndx * step;
+    let newVY = r.top  + ndy * step;
+
+    newVX = Math.max(cr.left + margin, Math.min(cr.right  - r.width  - margin, newVX));
+    newVY = Math.max(cr.top  + margin, Math.min(cr.bottom - r.height - margin, newVY));
+
+    const newLeft = newVX - cr.left;
+    const newTop  = newVY - cr.top;
+
+    const dur = Math.max(0.10, 0.27 - dodges * 0.012);
+    noBtn.style.transition = `left ${dur}s cubic-bezier(.34,1.56,.64,1), top ${dur}s cubic-bezier(.34,1.56,.64,1), background 0.3s ease`;
+    noBtn.style.left = newLeft + 'px';
+    noBtn.style.top  = newTop  + 'px';
+
+    noBtn.classList.remove('scared');
+    void noBtn.offsetWidth;
+    noBtn.classList.add('scared');
+
+    dodges++;
+    noBtn.textContent = noBtnTexts[Math.min(Math.floor(dodges / 1.2), noBtnTexts.length - 1)];
+    hint.textContent  = hints[Math.min(dodges - 1, hints.length - 1)];
+
+    const red = Math.min(dodges * 6, 60);
+    noBtn.style.background = `rgba(255,${220 - red},${220 - red},0.65)`;
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    const r  = noBtn.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    if(Math.hypot(e.clientX - cx, e.clientY - cy) < PROXIMITY) dodge(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    const t  = e.touches[0];
+    const r  = noBtn.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    if(Math.hypot(t.clientX - cx, t.clientY - cy) < PROXIMITY){
+      e.preventDefault();
+      dodge(t.clientX, t.clientY);
+    }
+  }, { passive:false });
+
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const r = noBtn.getBoundingClientRect();
+    dodge(r.left + r.width / 2, r.top + r.height / 2);
+  });
 
   function burstConfetti(){
     const pieces = ['❤️','🩵','💕','✨','💫'];
@@ -404,10 +487,12 @@
     }
   }
 
-  yesBtn.addEventListener('click', ()=>{
-    questionView.hidden = true;
-    answerView.hidden = false;
-    burstConfetti();
+yesBtn.addEventListener('click', () => {
+  noBtn.hidden = true;      // Hide the No button
+  questionView.hidden = true;
+  answerView.hidden = false;
+  burstConfetti();
+
   });
 
   // ---- "click for more message" reveal ----
@@ -421,14 +506,24 @@
   // ---- close button: go back to first page ----
   const closeBtn = document.getElementById('closeBtn');
 
-  function resetToQuestion(){
-    answerView.hidden = true;
-    questionView.hidden = false;
-    extraMsg.hidden = true;
-    moreBtn.hidden = false;
-    currentX = 0;
-    currentY = 0;
-    noBtn.style.transform = 'translate(0px, 0px)';
+function resetToQuestion(){
+  answerView.hidden = true;
+  questionView.hidden = false;
+
+  noBtn.hidden = false;     // Show the No button again
+
+  extraMsg.hidden = true;
+  moreBtn.hidden = false;
+  dodges = 0;
+  lastDodgeTime = 0;
+  hint.textContent = '';
+  noBtn.textContent = "No, I won't";
+  noBtn.style.background = '';
+  noBtn.style.transition = '';
+  noBtn.classList.remove('scared');
+
+  setTimeout(placeInitial, 50);
+
   }
 
   closeBtn.addEventListener('click', resetToQuestion);
